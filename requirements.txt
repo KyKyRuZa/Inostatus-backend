@@ -1,0 +1,33 @@
+# FastAPI и сервер
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.12
+
+# База данных
+sqlalchemy>=2.0.36
+psycopg2-binary>=2.9.10
+alembic>=1.14.0
+
+# Валидация данных
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+email-validator>=2.2.0
+
+# Аутентификация
+python-jose[cryptography]>=3.4.0
+passlib>=1.7.4
+bcrypt>=4.2.1
+argon2-cffi>=23.1.0
+
+# Email
+python-dotenv>=1.0.0
+aiosmtplib>=3.0.0
+
+# HTTP клиент
+httpx>=0.27.0
+
+# Rate limiting
+slowapi>=0.1.9
+
+# Утилиты
+python-dateutil>=2.9.0

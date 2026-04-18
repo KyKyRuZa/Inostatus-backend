@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
 from app.database import engine, Base
-from app.routes import auth, profile, check
+from app.routes import auth, profile, check, contact
 from app.middleware.rate_limiter import limiter, rate_limit_handler as rl_handler
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
@@ -55,6 +55,7 @@ async def health_check():
 app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(check.router)
+app.include_router(contact.router)
 
 @app.get("/", tags=["Root"])
 async def root():

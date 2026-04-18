@@ -12,7 +12,6 @@ async def send_email(to: str, subject: str, html_body: str) -> bool:
     msg["From"] = settings.SMTP_FROM
     msg["To"] = to
     msg["Subject"] = subject
-
     msg.attach(MIMEText(html_body, "html"))
 
     try:
@@ -33,115 +32,303 @@ async def send_email(to: str, subject: str, html_body: str) -> bool:
                 password=settings.SMTP_PASSWORD if settings.SMTP_PASSWORD else None,
                 start_tls=True,
             )
-        logger.info(f"✅ Email отправлен: {to} - {subject}")
+        logger.info(f"Email отправлен: {to} - {subject}")
         return True
     except Exception as e:
-        logger.error(f"❌ Ошибка отправки email: {e}")
+        logger.error(f"Ошибка отправки email: {e}")
         return False
 
 
 async def send_verification_email(to: str, token: str) -> bool:
-    verification_link = f"{settings.FRONTEND_URL}/auth/verify?token={token}"
+    link = f"{settings.FRONTEND_URL}/auth/verify?token={token}"
 
-    html_body = (
-        "<!DOCTYPE html>"
-        "<html><head><meta charset='UTF-8'>"
-        "<style>"
-        "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }"
-        ".container { max-width: 600px; margin: 0 auto; padding: 20px; }"
-        ".header { background: #4F46E5; color: white; padding: 20px; text-align: center; }"
-        ".content { padding: 30px 20px; background: #f9f9f9; }"
-        ".button { display: inline-block; padding: 12px 30px; background: #4F46E5;"
-        "  color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }"
-        ".footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }"
-        "</style></head><body>"
-        "<div class='container'>"
-        "<div class='header'><h1>InnoStatus</h1></div>"
-        "<div class='content'>"
-        "<h2>Подтверждение регистрации</h2>"
-        "<p>Здравствуйте!</p>"
-        "<p>Спасибо за регистрацию в InnoStatus. Для завершения регистрации подтвердите ваш email.</p>"
-        "<p style='text-align:center;'><a href='" + verification_link + "' class='button'>Подтвердить email</a></p>"
-        "<p>Или скопируйте ссылку:</p>"
-        "<p style='word-break: break-all; color: #4F46E5;'>" + verification_link + "</p>"
-        "<p>Ссылка действительна в течение 24 часов.</p>"
-        "</div>"
-        "<div class='footer'><p>© 2024 InnoStatus. Все права защищены.</p>"
-        "<p>Это письмо отправлено автоматически, не отвечайте на него.</p></div>"
-        "</div></body></html>"
-    )
+    html_body = f"""
+    <html>
+    <head><meta charset="UTF-8"></head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 40px 0;">
+                    <table role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
+                        <tr>
+                            <td style="background-color: #1a73e8; padding: 30px; text-align: center;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">InnoStatus</h1>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333333;">Подтверждение email</h2>
+                                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #666666;">
+                                    Здравствуйте! Спасибо за регистрацию в InnoStatus. Для завершения регистрации перейдите по ссылке ниже:
+                                </p>
+                                
+                                <!-- Button -->
+                                <table role="presentation" style="margin: 30px 0; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="background-color: #1a73e8; border-radius: 4px; text-align: center;">
+                                            <a href="{link}" style="display: inline-block; padding: 12px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">Подтвердить email</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <p style="margin: 30px 0 0 0; font-size: 14px; color: #999999;">
+                                    Или скопируйте ссылку в браузер:
+                                </p>
+                                <p style="margin: 10px 0 0 0; padding: 10px; background-color: #f4f4f4; font-size: 12px; word-break: break-all; color: #1a73e8;">
+                                    {link}
+                                </p>
+                                <p style="margin: 20px 0 0 0; font-size: 14px; color: #999999;">
+                                    Ссылка действительна в течение 24 часов.
+                                </p>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="background-color: #f4f4f4; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                <p style="margin: 0; font-size: 13px; color: #999999;">
+                                    © 2024 InnoStatus. Все права защищены.
+                                </p>
+                                <p style="margin: 8px 0 0 0; font-size: 12px; color: #999999;">
+                                    Это письмо отправлено автоматически, не отвечайте на него.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
 
     return await send_email(to, "Подтверждение email", html_body)
 
 
 async def send_password_reset_email(to: str, token: str) -> bool:
-    reset_link = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
+    link = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
 
-    html_body = (
-        "<!DOCTYPE html>"
-        "<html><head><meta charset='UTF-8'>"
-        "<style>"
-        "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }"
-        ".container { max-width: 600px; margin: 0 auto; padding: 20px; }"
-        ".header { background: #DC2626; color: white; padding: 20px; text-align: center; }"
-        ".content { padding: 30px 20px; background: #f9f9f9; }"
-        ".button { display: inline-block; padding: 12px 30px; background: #DC2626;"
-        "  color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }"
-        ".warning { background: #FEF3C7; padding: 15px; border-left: 4px solid #F59E0B; margin: 20px 0; }"
-        ".footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }"
-        "</style></head><body>"
-        "<div class='container'>"
-        "<div class='header'><h1>Восстановление пароля</h1></div>"
-        "<div class='content'>"
-        "<h2>Сброс пароля</h2>"
-        "<p>Вы запросили восстановление пароля для вашего аккаунта InnoStatus.</p>"
-        "<p style='text-align:center;'><a href='" + reset_link + "' class='button'>Сбросить пароль</a></p>"
-        "<p>Или скопируйте ссылку:</p>"
-        "<p style='word-break: break-all; color: #DC2626;'>" + reset_link + "</p>"
-        "<div class='warning'><strong>Важно:</strong> Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</div>"
-        "<p>Ссылка действительна в течение 1 часа.</p>"
-        "</div>"
-        "<div class='footer'><p>© 2024 InnoStatus. Все права защищены.</p>"
-        "<p>Это письмо отправлено автоматически, не отвечайте на него.</p></div>"
-        "</div></body></html>"
-    )
+    html_body = f"""
+    <html>
+    <head><meta charset="UTF-8"></head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 40px 0;">
+                    <table role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
+                        <tr>
+                            <td style="background-color: #d32f2f; padding: 30px; text-align: center;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">InnoStatus</h1>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333333;">Восстановление пароля</h2>
+                                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #666666;">
+                                    Вы запросили восстановление пароля для вашего аккаунта InnoStatus. Нажмите кнопку ниже, чтобы создать новый пароль:
+                                </p>
+                                
+                                <table role="presentation" style="margin: 30px 0; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="background-color: #d32f2f; border-radius: 4px; text-align: center;">
+                                            <a href="{link}" style="display: inline-block; padding: 12px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">Сбросить пароль</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <p style="margin: 30px 0 0 0; font-size: 14px; color: #999999;">
+                                    Или скопируйте ссылку в браузер:
+                                </p>
+                                <p style="margin: 10px 0 0 0; padding: 10px; background-color: #f4f4f4; font-size: 12px; word-break: break-all; color: #d32f2f;">
+                                    {link}
+                                </p>
+                                
+                                <table role="presentation" style="margin: 20px 0 0 0; border-collapse: collapse; width: 100%;">
+                                    <tr>
+                                        <td style="background-color: #fff3cd; padding: 15px; border-left: 3px solid #ffc107;">
+                                            <p style="margin: 0; font-size: 14px; color: #856404;">
+                                                <strong>Важно:</strong> Если вы не запрашивали сброс пароля, проигнорируйте это письмо. Ссылка действительна 1 час.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="background-color: #f4f4f4; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                <p style="margin: 0; font-size: 13px; color: #999999;">
+                                    © 2024 InnoStatus. Все права защищены.
+                                </p>
+                                <p style="margin: 8px 0 0 0; font-size: 12px; color: #999999;">
+                                    Это письмо отправлено автоматически, не отвечайте на него.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
 
     return await send_email(to, "Восстановление пароля", html_body)
 
 
 async def send_welcome_email(to: str, name: str = None) -> bool:
-    display_name = f" {name}!" if name else "!"
+    display_name = name if name else "Пользователь"
 
-    html_body = (
-        "<!DOCTYPE html>"
-        "<html><head><meta charset='UTF-8'>"
-        "<style>"
-        "body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }"
-        ".container { max-width: 600px; margin: 0 auto; padding: 20px; }"
-        ".header { background: #10B981; color: white; padding: 20px; text-align: center; }"
-        ".content { padding: 30px 20px; background: #f9f9f9; }"
-        ".button { display: inline-block; padding: 12px 30px; background: #10B981;"
-        "  color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }"
-        ".features { margin: 20px 0; }"
-        ".feature { padding: 10px 0; border-bottom: 1px solid #eee; }"
-        ".footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }"
-        "</style></head><body>"
-        "<div class='container'>"
-        "<div class='header'><h1>Добро пожаловать!</h1></div>"
-        "<div class='content'>"
-        "<h2>Здравствуйте" + display_name + "</h2>"
-        "<p>Ваш аккаунт InnoStatus успешно создан и готов к работе.</p>"
-        "<div class='features'>"
-        "<h3>Что вы можете делать:</h3>"
-        "<div class='feature'>✅ Проверять текст на плагиат</div>"
-        "<div class='feature'>✅ Получать API-ключи для интеграции</div>"
-        "<div class='feature'>✅ Отслеживать историю проверок</div>"
-        "<div class='feature'>✅ Выбирать подходящий тариф</div>"
-        "</div>"
-        "<p style='text-align:center;'><a href='" + settings.FRONTEND_URL + "/profile' class='button'>Перейти в личный кабинет</a></p>"
-        "</div>"
-        "<div class='footer'><p>© 2024 InnoStatus. Все права защищены.</p></div>"
-        "</div></body></html>"
-    )
+    html_body = f"""
+    <html>
+    <head><meta charset="UTF-8"></head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 40px 0;">
+                    <table role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
+                        <tr>
+                            <td style="background-color: #2e7d32; padding: 30px; text-align: center;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">InnoStatus</h1>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333333;">Добро пожаловать, {display_name}!</h2>
+                                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #666666;">
+                                    Ваш аккаунт InnoStatus успешно создан. Вот что вы можете делать:
+                                </p>
+                                
+                                <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                                    <tr>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; color: #333333;">
+                                            Проверять текст на плагиат
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; color: #333333;">
+                                            Получать API-ключи для интеграции
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; color: #333333;">
+                                            Отслеживать историю проверок
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0; font-size: 15px; color: #333333;">
+                                            Выбирать подходящий тариф
+                                        </td>
+                                    </tr>
+                                </table>
+                                
+                                <!-- Button -->
+                                <table role="presentation" style="margin: 30px 0; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="background-color: #2e7d32; border-radius: 4px; text-align: center;">
+                                            <a href="{settings.FRONTEND_URL}/profile" style="display: inline-block; padding: 12px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">Перейти в кабинет</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="background-color: #f4f4f4; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                <p style="margin: 0; font-size: 13px; color: #999999;">
+                                    © 2024 InnoStatus. Все права защищены.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
 
     return await send_email(to, "Добро пожаловать!", html_body)
+
+
+async def send_contact_notification_email(
+    to: str, name: str, phone: str, email: str, comment: str = "", request_type: str = "free"
+) -> bool:
+    request_type_label = "Бесплатный тестовый доступ" if request_type == "free" else "Платный доступ"
+
+    comment_row = ""
+    if comment:
+        comment_row = f"""
+        <tr>
+            <td style="padding: 12px 0; font-weight: bold; color: #333333; vertical-align: top;">Комментарий:</td>
+            <td style="padding: 12px 0; color: #666666;">
+                <div style="padding: 12px; background-color: #f4f4f4; border-left: 3px solid #1a73e8;">{comment}</div>
+            </td>
+        </tr>
+        """
+
+    html_body = f"""
+    <html>
+    <head><meta charset="UTF-8"></head>
+    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 40px 0;">
+                    <table role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
+                        <tr>
+                            <td style="background-color: #1a73e8; padding: 30px; text-align: center;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">InnoStatus</h1>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="padding: 40px 30px;">
+                                <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333333;">Новая заявка с контактной формы</h2>
+                                
+                                <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                                    <tr>
+                                        <td style="padding: 12px 0; font-weight: bold; color: #333333; width: 140px;">Имя:</td>
+                                        <td style="padding: 12px 0; color: #666666;">{name}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0; font-weight: bold; color: #333333;">Телефон:</td>
+                                        <td style="padding: 12px 0; color: #666666;">
+                                            <a href="tel:{phone}" style="color: #1a73e8; text-decoration: none;">{phone}</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0; font-weight: bold; color: #333333;">Email:</td>
+                                        <td style="padding: 12px 0; color: #666666;">
+                                            <a href="mailto:{email}" style="color: #1a73e8; text-decoration: none;">{email}</a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 12px 0; font-weight: bold; color: #333333;">Тип запроса:</td>
+                                        <td style="padding: 12px 0; color: #666666;">{request_type_label}</td>
+                                    </tr>
+                                    {comment_row}
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td style="background-color: #f4f4f4; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
+                                <p style="margin: 0; font-size: 13px; color: #999999;">
+                                    © 2024 InnoStatus. Все права защищены.
+                                </p>
+                                <p style="margin: 8px 0 0 0; font-size: 12px; color: #999999;">
+                                    Это письмо отправлено автоматически из контактной формы.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+    return await send_email(to, f"Новая заявка: {name}", html_body)

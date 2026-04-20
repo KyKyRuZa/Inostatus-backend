@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     # Rate Limiting
     # ===========================================
     RATE_LIMIT_PER_MINUTE: int = 60
-    DISABLE_RATE_LIMIT: bool = False  # Для development
+    DISABLE_RATE_LIMIT: bool = False
 
     class Config:
         env_file = ".env"

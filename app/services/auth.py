@@ -16,18 +16,18 @@ class ExternalAPIError(Exception):
 
 async def get_external_api_stats(api_key: str) -> dict:
     api_base_url = settings.CHECK_FILES_API_URL
-    
+
     url = f"{api_base_url}/stats"
-    
+
     headers = {
         "X-API-Key": api_key,
         "IntegratorID": settings.INTEGRATOR_ID,
     }
-    
+
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url, headers=headers)
-            
+
             if response.status_code == 403:
                 raise ExternalAPIError("Неверный API ключ")
             elif response.status_code == 404:
@@ -36,9 +36,9 @@ async def get_external_api_stats(api_key: str) -> dict:
                 raise ExternalAPIError("Превышен лимит запросов")
             elif response.status_code != 200:
                 raise ExternalAPIError(f"Ошибка API: {response.status_code}")
-            
+
             return response.json()
-            
+
     except httpx.RequestError as e:
         raise ExternalAPIError(f"Ошибка соединения: {str(e)}")
 
@@ -82,13 +82,12 @@ def verify_user_password(db: Session, email: str, password: str) -> User | None:
     return user
 
 
-
 def create_api_key(
     db: Session,
     user_id: int,
     name: str | None = None,
     key_type: str = "free",
-    max_uses: int = 2
+    max_uses: int = 2,
 ) -> APIKey:
     api_key = f"sk_{secrets.token_urlsafe(32)}"
     db_api_key = APIKey(
@@ -135,7 +134,6 @@ def increment_api_key_usage(db: Session, api_key: APIKey) -> APIKey:
     return api_key
 
 
-
 def create_check_history(
     db: Session,
     user_id: int | None,
@@ -144,6 +142,7 @@ def create_check_history(
     result: str | None = None,
     similarity_score: float = 0.0,
     api_key_id: int | None = None,
+    check_type: str = "text",  # "text", "website", "file"
 ) -> CheckHistory:
     check = CheckHistory(
         user_id=user_id,
@@ -152,6 +151,7 @@ def create_check_history(
         result=result,
         similarity_score=similarity_score,
         api_key_id=api_key_id,
+        check_type=check_type,
     )
     db.add(check)
     db.commit()
@@ -164,14 +164,13 @@ def get_user_check_history(
     user_id: int,
     skip: int = 0,
     limit: int = 100,
+    check_type: str | None = None,
 ) -> list[CheckHistory]:
+    query = db.query(CheckHistory).filter(CheckHistory.user_id == user_id)
+    if check_type:
+        query = query.filter(CheckHistory.check_type == check_type)
     return (
-        db.query(CheckHistory)
-        .filter(CheckHistory.user_id == user_id)
-        .order_by(CheckHistory.created_at.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
+        query.order_by(CheckHistory.created_at.desc()).offset(skip).limit(limit).all()
     )
 
 
@@ -190,9 +189,7 @@ def get_user_stats(db: Session, user_id: int) -> dict:
         .scalar()
     )
     total_api_keys = (
-        db.query(func.count(APIKey.id))
-        .filter(APIKey.user_id == user_id)
-        .scalar()
+        db.query(func.count(APIKey.id)).filter(APIKey.user_id == user_id).scalar()
     )
     active_api_keys = (
         db.query(func.count(APIKey.id))

@@ -30,14 +30,12 @@ from app.utils.jwt import (
     decode_token,
     decode_token as jwt_decode_token,
 )
-from app.utils.cookies import (
-    set_auth_cookies,
-    clear_auth_cookies,
-    get_token_from_cookie,
-    ACCESS_TOKEN_COOKIE,
-)
 from app.config import settings
-from app.services.email import send_welcome_email, send_verification_email, send_password_reset_email
+from app.services.email import (
+    send_welcome_email,
+    send_verification_email,
+    send_password_reset_email,
+)
 from app.services.audit_logger import log_login, log_register, log_failed_auth_attempt
 from app.middleware.rate_limiter import limiter
 from typing import Optional
@@ -46,12 +44,9 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 security = HTTPBearer(auto_error=False)
 
 
-
-def _get_access_token(request: Request, credentials: Optional[HTTPAuthorizationCredentials] = None) -> Optional[str]:
-    cookie_token = get_token_from_cookie(request, ACCESS_TOKEN_COOKIE)
-    if cookie_token:
-        return cookie_token
-
+def _get_access_token(
+    request: Request, credentials: Optional[HTTPAuthorizationCredentials] = None
+) -> Optional[str]:
     if credentials:
         return credentials.credentials
 
@@ -62,7 +57,11 @@ def _get_access_token(request: Request, credentials: Optional[HTTPAuthorizationC
     return None
 
 
-def _require_authenticated_user(request: Request, db: Session, credentials: Optional[HTTPAuthorizationCredentials] = None):
+def _require_authenticated_user(
+    request: Request,
+    db: Session,
+    credentials: Optional[HTTPAuthorizationCredentials] = None,
+):
     token = _get_access_token(request, credentials)
     if not token:
         raise HTTPException(
@@ -96,8 +95,9 @@ def _require_authenticated_user(request: Request, db: Session, credentials: Opti
     return user
 
 
-
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+)
 @limiter.limit("3/hour")
 async def register(
     request: Request,
@@ -126,9 +126,12 @@ async def register(
         data={"sub": str(user.id)},
         expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
-    set_auth_cookies(response, access_token, refresh_token)
 
-    return user
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -139,12 +142,14 @@ async def login(
     login_data: LoginRequest,
     db: Session = Depends(get_db),
 ):
-    user = verify_user_password(db, email=login_data.email, password=login_data.password)
+    user = verify_user_password(
+        db, email=login_data.email, password=login_data.password
+    )
     if not user:
         log_failed_auth_attempt(
             identifier=login_data.email,
             request=request,
-            failure_reason="invalid_credentials"
+            failure_reason="invalid_credentials",
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -156,7 +161,7 @@ async def login(
         log_failed_auth_attempt(
             identifier=login_data.email,
             request=request,
-            failure_reason="account_deactivated"
+            failure_reason="account_deactivated",
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -173,7 +178,6 @@ async def login(
         data={"sub": str(user.id)},
         expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
-    set_auth_cookies(response, access_token, refresh_token)
 
     return {
         "access_token": access_token,
@@ -188,10 +192,8 @@ async def refresh_token(
     response: Response,
     db: Session = Depends(get_db),
 ):
-    refresh_token_str = get_token_from_cookie(request, "refresh_token")
-    if not refresh_token_str:
-        body = await request.json() if request.headers.get("content-type") else {}
-        refresh_token_str = body.get("refresh_token")
+    body = await request.json() if request.headers.get("content-type") else {}
+    refresh_token_str = body.get("refresh_token")
 
     if not refresh_token_str:
         raise HTTPException(
@@ -230,7 +232,6 @@ async def refresh_token(
         data={"sub": str(user.id)},
         expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
     )
-    set_auth_cookies(response, new_access_token, new_refresh_token)
 
     return {
         "access_token": new_access_token,
@@ -241,7 +242,6 @@ async def refresh_token(
 
 @router.post("/logout")
 async def logout(response: Response):
-    clear_auth_cookies(response)
     return {"message": "Выход выполнен"}
 
 
@@ -287,7 +287,9 @@ async def change_password(
 
     user = _require_authenticated_user(request, db, credentials)
 
-    verified_user = verify_user_password(db, email=user.email, password=password_data.current_password)
+    verified_user = verify_user_password(
+        db, email=user.email, password=password_data.current_password
+    )
     if not verified_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

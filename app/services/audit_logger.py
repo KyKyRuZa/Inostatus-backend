@@ -108,7 +108,7 @@ def log_check_performed(user_id: str, request: Request, check_type: str, text_le
         event_type='check_performed',
         user_id=user_id,
         details={
-            'check_type': check_type,  # 'text' или 'file'
+            'check_type': check_type,
             'text_length': text_length,
             'api_key_id': api_key_id
         },

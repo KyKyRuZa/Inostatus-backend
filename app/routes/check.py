@@ -8,6 +8,7 @@ from fastapi import (
     UploadFile,
     File,
 )
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -467,8 +468,6 @@ async def download_pdf(
     db: Session = Depends(get_db),
     auth_result: tuple[int, int | None] = Depends(get_user_id_from_auth),
 ):
-    from fastapi.responses import StreamingResponse
-
     try:
         status_data = await get_task_status(task_id)
 
@@ -485,6 +484,43 @@ async def download_pdf(
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f"attachment; filename=report_{task_id}.pdf"
+            },
+        )
+
+    except DownloadError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except TaskStatusError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except CheckServiceError as e:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
+
+
+@router.get("/download_json/{task_id}")
+async def download_json(
+    request: Request,
+    task_id: str,
+    db: Session = Depends(get_db),
+    auth_result: tuple[int, int | None] = Depends(get_user_id_from_auth),
+):
+    try:
+        status_data = await get_task_status(task_id)
+
+        if status_data["status"] != "completed":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Отчёт ещё не готов. Статус: {status_data['status']}",
+            )
+
+        json_result = await download_json_result(task_id)
+        json_content = json.dumps(json_result, ensure_ascii=False, indent=2).encode(
+            "utf-8"
+        )
+
+        return StreamingResponse(
+            iter([json_content]),
+            media_type="application/json",
+            headers={
+                "Content-Disposition": f"attachment; filename=report_{task_id}.json"
             },
         )
 

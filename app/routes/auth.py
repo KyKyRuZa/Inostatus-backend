@@ -32,8 +32,6 @@ from app.utils.jwt import (
 )
 from app.config import settings
 from app.services.email import (
-    send_welcome_email,
-    send_verification_email,
     send_password_reset_email,
 )
 from app.services.audit_logger import log_login, log_register, log_failed_auth_attempt
@@ -115,8 +113,6 @@ async def register(
     user = create_user(db, user_data)
 
     log_register(user_id=str(user.id), request=request, email=user.email)
-
-    await send_welcome_email(user.email, user.name or "")
 
     access_token = create_access_token(
         data={"sub": str(user.id)},

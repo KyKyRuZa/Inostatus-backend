@@ -39,72 +39,6 @@ async def send_email(to: str, subject: str, html_body: str) -> bool:
         return False
 
 
-async def send_verification_email(to: str, token: str) -> bool:
-    link = f"{settings.FRONTEND_URL}/auth/verify?token={token}"
-
-    html_body = f"""
-    <html>
-    <head><meta charset="UTF-8"></head>
-    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-        <table role="presentation" style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <td style="padding: 40px 0;">
-                    <table role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
-                        <tr>
-                            <td style="background-color: #1a73e8; padding: 30px; text-align: center;">
-                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">InnoStatus</h1>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td style="padding: 40px 30px;">
-                                <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333333;">Подтверждение email</h2>
-                                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #666666;">
-                                    Здравствуйте! Спасибо за регистрацию в InnoStatus. Для завершения регистрации перейдите по ссылке ниже:
-                                </p>
-                                
-                                <!-- Button -->
-                                <table role="presentation" style="margin: 30px 0; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="background-color: #1a73e8; border-radius: 4px; text-align: center;">
-                                            <a href="{link}" style="display: inline-block; padding: 12px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">Подтвердить email</a>
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <p style="margin: 30px 0 0 0; font-size: 14px; color: #999999;">
-                                    Или скопируйте ссылку в браузер:
-                                </p>
-                                <p style="margin: 10px 0 0 0; padding: 10px; background-color: #f4f4f4; font-size: 12px; word-break: break-all; color: #1a73e8;">
-                                    {link}
-                                </p>
-                                <p style="margin: 20px 0 0 0; font-size: 14px; color: #999999;">
-                                    Ссылка действительна в течение 24 часов.
-                                </p>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td style="background-color: #f4f4f4; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                <p style="margin: 0; font-size: 13px; color: #999999;">
-                                    © 2024 InnoStatus. Все права защищены.
-                                </p>
-                                <p style="margin: 8px 0 0 0; font-size: 12px; color: #999999;">
-                                    Это письмо отправлено автоматически, не отвечайте на него.
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </body>
-    </html>
-    """
-
-    return await send_email(to, "Подтверждение email", html_body)
-
-
 async def send_password_reset_email(to: str, token: str) -> bool:
     link = f"{settings.FRONTEND_URL}/auth/reset-password?token={token}"
 
@@ -177,86 +111,17 @@ async def send_password_reset_email(to: str, token: str) -> bool:
     return await send_email(to, "Восстановление пароля", html_body)
 
 
-async def send_welcome_email(to: str, name: str = None) -> bool:
-    display_name = name if name else "Пользователь"
-
-    html_body = f"""
-    <html>
-    <head><meta charset="UTF-8"></head>
-    <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
-        <table role="presentation" style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <td style="padding: 40px 0;">
-                    <table role="presentation" style="width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 4px; overflow: hidden;">
-                        <tr>
-                            <td style="background-color: #2e7d32; padding: 30px; text-align: center;">
-                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">InnoStatus</h1>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td style="padding: 40px 30px;">
-                                <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #333333;">Добро пожаловать, {display_name}!</h2>
-                                <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #666666;">
-                                    Ваш аккаунт InnoStatus успешно создан. Вот что вы можете делать:
-                                </p>
-                                
-                                <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                                    <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; color: #333333;">
-                                            Проверять текст на плагиат
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; color: #333333;">
-                                            Получать API-ключи для интеграции
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; border-bottom: 1px solid #e0e0e0; font-size: 15px; color: #333333;">
-                                            Отслеживать историю проверок
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 12px 0; font-size: 15px; color: #333333;">
-                                            Выбирать подходящий тариф
-                                        </td>
-                                    </tr>
-                                </table>
-                                
-                                <!-- Button -->
-                                <table role="presentation" style="margin: 30px 0; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="background-color: #2e7d32; border-radius: 4px; text-align: center;">
-                                            <a href="{settings.FRONTEND_URL}/profile" style="display: inline-block; padding: 12px 40px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: 600;">Перейти в кабинет</a>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                        
-                        <tr>
-                            <td style="background-color: #f4f4f4; padding: 20px 30px; text-align: center; border-top: 1px solid #e0e0e0;">
-                                <p style="margin: 0; font-size: 13px; color: #999999;">
-                                    © 2024 InnoStatus. Все права защищены.
-                                </p>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-    </body>
-    </html>
-    """
-
-    return await send_email(to, "Добро пожаловать!", html_body)
-
-
 async def send_contact_notification_email(
-    to: str, name: str, phone: str, email: str, comment: str = "", request_type: str = "free"
+    to: str,
+    name: str,
+    phone: str,
+    email: str,
+    comment: str = "",
+    request_type: str = "free",
 ) -> bool:
-    request_type_label = "Бесплатный тестовый доступ" if request_type == "free" else "Платный доступ"
+    request_type_label = (
+        "Бесплатный тестовый доступ" if request_type == "free" else "Платный доступ"
+    )
 
     comment_row = ""
     if comment:

@@ -120,7 +120,6 @@ class ChangePasswordRequest(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
-    is_verified: bool
     created_at: datetime
     organization: Optional[str] = None
     inn: Optional[str] = None
@@ -235,9 +234,7 @@ class CheckHistoryResponse(BaseModel):
     filename: Optional[str] = None
     similarity_score: float
     created_at: datetime
-    result: Optional[str] = (
-        None
-    )
+    result: Optional[str] = None
 
     class Config:
         from_attributes = True

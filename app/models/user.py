@@ -28,7 +28,6 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     name = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -53,12 +52,8 @@ class APIKey(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     key = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=True)
-    key_type = Column(
-        String(50), default="free", nullable=False
-    ) 
-    max_uses = Column(
-        Integer, default=2, nullable=False
-    )
+    key_type = Column(String(50), default="free", nullable=False)
+    max_uses = Column(Integer, default=2, nullable=False)
     used_count = Column(Integer, default=0, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -95,9 +90,7 @@ class CheckHistory(Base):
     filename = Column(String(255), nullable=True)
     result = Column(Text, nullable=True)
     similarity_score = Column(Float, default=0.0)
-    check_type = Column(
-        String(50), default="text", nullable=False, index=True
-    )
+    check_type = Column(String(50), default="text", nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     user = relationship("User", back_populates="check_history")
